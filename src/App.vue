@@ -34,22 +34,25 @@
 
             <el-tabs v-model="activeTab" @tab-click="handleClick">
               <el-tab-pane v-for="tab in pageData" :key="tab.id" :label="tab.name" :name="tab.id">
-                <template v-for="(table , i  ) in tab.son" >
-                  <div v-if="table.name !== '9'" class="table">
+                <template v-for="(table , i  ) in tab.son">
+                  <div v-if="table.id !== '9'" class="table">
                     <div class="table-header"> {{ i }} -- {{table.name}}</div>
                     <div class="table-body">
-                      <div class="table-cell" v-for="(row ,i) in  table.son">
-                        <span>{{++i}}</span> <span>{{row.name}}</span> <span><input type="number"
-                                                                                    v-model="row.val"></span>
+                      <div class="table-cell" v-for="(cell ,i) in  table.son" @click="addSelectedCells(cell)"
+                           :style="{'background':_showCellBgc(cell)}">
+                        <span>{{++i}}</span>
+                        <span>{{cell.name}}</span>
+                        <span><input type="number" v-model="cell.val"></span>
                       </div>
                     </div>
                   </div>
-                  <div v-if="table.id === '9'" class="table table_9" >
+                  <div v-if="table.id === '9'" class="table table_9">
                     <div class="table-header"> {{ i }} -- {{table.name}}</div>
                     <div class="table-body">
                       <div class="table-row" v-for="(row , i) in  table.son">
                         <span class="table-cell">{{row.name}}</span>
-                        <span class="table-cell" v-for="(item , i) in row.sub">{{item}} <input type="checkbox" v-model="item.val"></span>
+                        <span class="table-cell" v-for="(item , i) in row.sub">{{item}} <input type="checkbox"
+                                                                                               v-model="item.val"></span>
                         <span class="table-cell">赔率：{{row.rate}}</span>
                         <span class="table-cell"> <input type="number">  </span>
                       </div>
@@ -96,8 +99,8 @@
         },
         activeTab: 'second',
         pageData: null,
-        selectedMenuIndex: "1"
-
+        selectedMenuIndex: "1",
+        selectedCells: []
       };
     },
     mounted() {
@@ -110,6 +113,7 @@
               table.son.forEach(function (item) {
                 item.val = ''
               })
+
             })
           });
           that.pageData = res.data
@@ -117,13 +121,39 @@
         }
       )
     },
+    computed: {},
     methods: {
       handleClick(tab, event) {
         console.log(tab, event);
       },
+      _showCellBgc(cell) {
+        return this.selectedCells.some(function (v, i) {
+          return v === cell
+        })
+      },
       menuSelect(key, keyPath) {
         console.log(" menuSelect:", key, keyPath)
         this.selectedMenuIndex = key;
+      },
+      addSelectedCells(cell) {
+        const that = this;
+        const isExist = that.selectedCells.some(function (v) {
+          return v === cell
+        })
+
+        if (!isExist) {
+          that.selectedCells.push(cell)
+        } else {
+          let index = that.selectedCells.forEach(function (v, i) {
+            if (v === cell) {
+              return i
+            }
+          })
+          that.selectedCells.splice(index, 1)
+        }
+
+        console.log(that.selectedCells)
+
       }
     }
   }
@@ -208,21 +238,21 @@
             }
           }
         }
-        .table_9{
-          >.table-body{
+        .table_9 {
+          > .table-body {
             display: flex;
             flex-direction: column;
-            >.table-row{
+            > .table-row {
               display: flex;
               flex-direction: row;
               align-items: center;
               justify-content: space-around;
-              >.table-cell{
+              > .table-cell {
                 /*width: 12.5%;*/
                 display: flex;
                 flex-direction: row;
                 align-content: center;
-                >input{
+                > input {
                   display: inline-flex;
                 }
               }
