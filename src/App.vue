@@ -5,57 +5,77 @@
     <el-container class="innerBox">
       <el-aside width="260px">
         <div>
-          <el-button>默认按钮</el-button>
-          <el-button type="primary">主要按钮</el-button>
-          <el-button type="success">成功按钮</el-button>
-          <el-button type="info">信息按钮</el-button>
-          <el-button type="warning">警告按钮</el-button>
-          <el-button type="danger">危险按钮</el-button>
+          <!--  @open="handleOpen" @close="handleClose"  -->
+          <el-menu :default-active="selectedMenuIndex" background-color="#eeeeee" text-color="#333"
+                   active-text-color="#000" @select="menuSelect">
+            <el-menu-item index="1">
+              <span slot="title">最新投注</span>
+              <i class="el-icon-menu"></i>
+            </el-menu-item>
+            <el-menu-item index="2">
+              <i class="el-icon-menu"></i>
+              <span slot="title">双面长龙</span>
+            </el-menu-item>
+            <el-menu-item index="3">
+              <i class="el-icon-document"></i>
+              <span slot="title">全部长龙</span>
+            </el-menu-item>
+            <el-menu-item index="4">
+              <i class="el-icon-setting"></i>
+              <span slot="title">开奖结果</span>
+            </el-menu-item>
+          </el-menu>
         </div>
-        <!--<el-collapse v-model="activeNames" @change="handleChange">-->
-        <!--<el-collapse-item title="一致性 Consistency" name="1">-->
-        <!--<div>与现实生活一致：与现实生活的流程、逻辑保持一致，遵循用户习惯的语言和概念；</div>-->
-        <!--<div>在界面中一致：所有的元素和结构需保持一致，比如：设计样式、图标和文本、元素的位置等。</div>-->
-        <!--</el-collapse-item>-->
-        <!--<el-collapse-item title="反馈 Feedback" name="2">-->
-        <!--<div>控制反馈：通过界面样式和交互动效让用户可以清晰的感知自己的操作；</div>-->
-        <!--<div>页面反馈：操作后，通过页面元素的变化清晰地展现当前状态。</div>-->
-        <!--</el-collapse-item>-->
-        <!--<el-collapse-item title="效率 Efficiency" name="3">-->
-        <!--<div>简化流程：设计简洁直观的操作流程；</div>-->
-        <!--<div>清晰明确：语言表达清晰且表意明确，让用户快速理解进而作出决策；</div>-->
-        <!--<div>帮助用户识别：界面简单直白，让用户快速识别而非回忆，减少用户记忆负担。</div>-->
-        <!--</el-collapse-item>-->
-        <!--<el-collapse-item title="可控 Controllability" name="4">-->
-        <!--<div>用户决策：根据场景可给予用户操作建议或安全提示，但不能代替用户进行决策；</div>-->
-        <!--<div>结果可控：用户可以自由的进行操作，包括撤销、回退和终止当前操作等。</div>-->
-        <!--</el-collapse-item>-->
-        <!--</el-collapse>-->
-
 
       </el-aside>
       <el-main>
-        <template>
-          <el-tabs v-model="activeTab" @tab-click="handleClick">
+        <template v-if="selectedMenuIndex === '1' ">
+          <template v-if="pageData">
 
-            <el-tab-pane v-for="tab in pageData" :key="tab.id" :label="tab.name" :name="tab.id">
-                <div class="table" v-for="(table , i  ) in tab.son" :key="table.id">
-                  <div class="table-header"> {{ i }} -- {{table.name}}</div>
-                  <div class="table-body">
-
-                      <div class="table-cell" v-for="(row ,i) in  table.son" >
-
-                        <span style="color: red">{{i}}</span> <span>{{row.rate}}</span> <input type="number" v-model="row.val">
-
+            <el-tabs v-model="activeTab" @tab-click="handleClick">
+              <el-tab-pane v-for="tab in pageData" :key="tab.id" :label="tab.name" :name="tab.id">
+                <template v-for="(table , i  ) in tab.son" >
+                  <div v-if="table.name !== '9'" class="table">
+                    <div class="table-header"> {{ i }} -- {{table.name}}</div>
+                    <div class="table-body">
+                      <div class="table-cell" v-for="(row ,i) in  table.son">
+                        <span>{{++i}}</span> <span>{{row.name}}</span> <span><input type="number"
+                                                                                    v-model="row.val"></span>
                       </div>
-
-
+                    </div>
                   </div>
-                </div>
+                  <div v-if="table.id === '9'" class="table table_9" >
+                    <div class="table-header"> {{ i }} -- {{table.name}}</div>
+                    <div class="table-body">
+                      <div class="table-row" v-for="(row , i) in  table.son">
+                        <span class="table-cell">{{row.name}}</span>
+                        <span class="table-cell" v-for="(item , i) in row.sub">{{item}} <input type="checkbox" v-model="item.val"></span>
+                        <span class="table-cell">赔率：{{row.rate}}</span>
+                        <span class="table-cell"> <input type="number">  </span>
+                      </div>
+                    </div>
+                  </div>
 
-            </el-tab-pane>
-            <!--<el-tab-pane label="配置管理" name="second">配置管理</el-tab-pane>-->
-          </el-tabs>
+
+                </template>
+
+              </el-tab-pane>
+            </el-tabs>
+
+
+          </template>
+          <template v-else>
+            后台数据获取中...
+          </template>
+        </template>
+        <template v-if="selectedMenuIndex === '2'">
+          menu2 对应的view
+        </template>
+        <template v-if="selectedMenuIndex === '3'">
+          menu3 对应的view
+        </template>
+        <template v-if="selectedMenuIndex === '4'">
+          menu4 对应的view
         </template>
 
       </el-main>
@@ -75,7 +95,8 @@
           pageData: "/pagedata"
         },
         activeTab: 'second',
-        pageData: null
+        pageData: null,
+        selectedMenuIndex: "1"
 
       };
     },
@@ -84,7 +105,14 @@
       Axios.get(`${that.api.host}${that.api.pageData}`).then(
         (res) => {
           console.log(res.data)
-          that.pageData = res.data;
+          res.data.forEach(function (tab, i) {
+            tab.son.forEach(function (table, i) {
+              table.son.forEach(function (item) {
+                item.val = ''
+              })
+            })
+          });
+          that.pageData = res.data
           that.activeTab = that.pageData[0].id;
         }
       )
@@ -92,6 +120,10 @@
     methods: {
       handleClick(tab, event) {
         console.log(tab, event);
+      },
+      menuSelect(key, keyPath) {
+        console.log(" menuSelect:", key, keyPath)
+        this.selectedMenuIndex = key;
       }
     }
   }
@@ -107,32 +139,93 @@
       /*background: seashell;*/
     }
     .innerBox {
-      /*width: 100%;*/
-      /*height: 100%;*/
       .el-aside {
-        /*width: 100%;*/
-        /*height: 100%;*/
         padding-top: 30px;
+        background: #eeeeee;
 
       }
       .el-main {
         padding-left: 30px;
-        .table{
+        padding-right: 30px;
+        .table {
           display: flex;
           flex-direction: column;
-          .table-header{
-            display: flex;
+          margin-bottom: 20px;
+          .table-header {
+            text-align: center;
+            font-weight: bolder;
+            padding: 5px 0;
+            /*background: #dadada;*/
+            background-image: linear-gradient(to bottom, #dadada, rgba(232, 232, 232, 0.56), #dadada);
+            border: 1px solid #a3a3a3;
           }
-          .table-body{
+          .table-body {
             display: flex;
             flex-direction: row;
             flex-wrap: wrap;
             box-sizing: border-box;
-            .table-cell{
-              border: 1px solid seagreen;
+            .table-cell {
+              width: 33.333%;
+              /*border: 1px solid seagreen;*/
               box-sizing: border-box;
-              width: 33%;
+              display: flex;
+              flex-direction: row;
+              justify-content: center;
+              text-align: center;
+              height: 30px;
+              border-bottom: 1px solid #b5b5b5;
+              border-left: 1px solid #b5b5b5;
+              border-right: 1px solid #b5b5b5;
 
+              &:not(:first-child) {
+                /*border-left:none ;*/
+              }
+
+              > span {
+                /*border-left: 1px solid #b5b5b5 ;*/
+                &:first-child {
+                  border-left: none;
+                }
+                > input {
+                  width: 50px;
+                }
+                &:nth-child(1) {
+                  background: #e7e7e7;
+                  width: 20%;
+                  font-weight: bolder;
+                }
+
+                &:nth-child(2) {
+                  width: 20%;
+                  color: red;
+                  font-weight: bolder;
+                }
+                &:nth-child(3) {
+                  text-align: left;
+                  width: 60%;
+                }
+              }
+            }
+          }
+        }
+        .table_9{
+          >.table-body{
+            display: flex;
+            flex-direction: column;
+            >.table-row{
+              display: flex;
+              flex-direction: row;
+              align-items: center;
+              justify-content: space-around;
+              >.table-cell{
+                /*width: 12.5%;*/
+                display: flex;
+                flex-direction: row;
+                align-content: center;
+                >input{
+                  display: inline-flex;
+                }
+              }
             }
           }
         }
