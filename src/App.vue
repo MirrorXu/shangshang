@@ -19,10 +19,6 @@
           <!--  @open="handleOpen" @close="handleClose"  -->
           <el-menu :default-active="selectedMenuIndex" background-color="#eeeeee" text-color="#333"
                    active-text-color="#000" @select="menuSelect">
-            <!--<el-menu-item index="1">-->
-              <!--<span slot="title">账户信息</span>-->
-              <!--<i class="el-icon-menu"></i>-->
-            <!--</el-menu-item>-->
             <el-menu-item index="2">
               <i class="el-icon-menu"></i>
               <span slot="title">最新投注</span>
@@ -37,12 +33,6 @@
 
 
       <el-main>
-        <!--账户信息-->
-        <!--<template v-if="selectedMenuIndex === '1'">-->
-
-        <!--</template>-->
-
-
         <!--最新投注-->
         <template v-if="selectedMenuIndex === '2' ">
           <template v-if="pageData">
@@ -151,6 +141,7 @@
               </div>
             </div>
 
+
             <el-tabs type="border-card" v-model="activeTab" @tab-click="tabsClick">
               <el-tab-pane v-for="tab in pageData" :key="tab.id" :label="tab.name" :name="tab.id">
 
@@ -163,7 +154,7 @@
                       <div class="table-cell" v-for="(cell ,i) in  table.son" :class="{ bgYellow:cell.isSelected}">
                         <span>{{++i}}</span>
                         <span>{{cell.rate}}</span>
-                        <span><input v-model="cell.val" type="number" @click.self="toggleSelected(cell)"
+                        <span><input  v-model="cell.val" type="number" @click.self="toggleSelected(cell)"
                                      @blur="checkInput(cell)"></span>
                         <!--@change.self="checkInput(cell)"-->
                       </div>
@@ -198,7 +189,7 @@
                         <span class="table-cell" style="color: red">赔率：{{row.rate}}</span>
                         <span class="table-cell"> <span>金额：</span><input v-model="row.val" type="number"
                                                                          @click.self="toggleSelected(row)"
-                                                                         @blur="checkInput(row)"> {{row.name}} </span>
+                                                                         @blur="checkInput(row)"> </span>
                       </div>
                     </div>
                   </div>
@@ -233,8 +224,6 @@
 
         <!--开奖结果-->
         <template v-if="selectedMenuIndex === '3'">
-
-
           <template v-if="winData">
             <el-table :data="_pagedWinData" stripe style="width: 100%">
               <el-table-column prop="lottery_periods" label="期数" width="180"></el-table-column>
@@ -248,8 +237,6 @@
                   <span v-else> 未中奖 </span>
                 </template>
               </el-table-column>
-
-
 
 
             </el-table>
@@ -287,7 +274,7 @@
         setAll: undefined,
         dialogVisible: false,
         api: {
-          host:"", //http://jon.linxizhilian.cn
+          host:"http://jon.linxizhilian.cn", //http://jon.linxizhilian.cn
           pageData: "/pagedata",
           buy: "/buyrecord",
           index: "/indexdata",
@@ -307,24 +294,22 @@
         selectedCells: [],
         lotteryIndex: 0,
         Timer: null,
-        reloadTime: 18000,
+        intervalTimer:null,
+        reloadTime: 30000,
         currentPage:1,
 
       };
     },
     mounted() {
-//      console.log('mounted:');
       this.getPageData();  // 获取当前期投注的信息
       this.getIndexData();  // 获取其他信息
       this.getUserInfo();  // 获取用户信息
-      this.getWinData()
+      this.getWinData();
 
+      console.log( 'mounted')
       const that = this;
-      setTimeout(function () {
-        that.reloadWindow()
-      }, that.reloadTime)
-    },
 
+    },
     computed: {
       _remainingTime() {
         const that = this;
@@ -379,23 +364,30 @@
       },
 
     },
-    methods: {
+    methods:{
       setTimer() {
-        // 设置定时器，在indexData接口数据请求成功并绑定至data后，立即执行定时器
+        // 倒计时，在indexData接口数据请求成功并绑定至data后，立即执行定倒计时
         const that = this;
-        if (!that.indexData.remaining_time) {
-          alert('服务器返回remaining_time有误')
-          return
-        }
 
 
+        //剩余时间每一秒减少 1  ，触发_remainingTime 计算属性，并更新到视图
         that.Timer = setInterval(function () {
           if (that.indexData.remaining_time > 0) {
             that.indexData.remaining_time -= 1
           } else {
-            clearInterval(that.Timer)
+            // 倒计时到0的时候停止倒计时，并清除定时器，设置remaining_time 为 0
+            clearInterval(that.Timer);
+            that.indexData.remaining_time = 0
           }
         }, 1000)
+
+        // 保证30秒对indexData数据对更新
+        clearInterval( that.intervalTimer )
+        that.intervalTimer = setInterval(function () {
+          clearInterval(that.Timer);
+          that.getIndexData()
+        }, that.reloadTime)
+
       },
       clearTimer() {
         // 清除定时器
@@ -468,22 +460,6 @@
 
         window.location.reload()
       },
-
-      clearSeletedCells() {
-        //重置： 清空所有已经选择到的元素, 并设置其isSelected 为false
-
-        const that = this;
-        that.selectedCells.forEach(function (v) {
-          v.isSelected = false;
-          console.log(v.isSelected);
-        })
-
-        that.selectedCells.length = 0;
-        that.setAll = undefined;
-
-
-      },
-
       // 左侧menu菜单切换时的调用函数
       menuSelect(key, keyPath) {
 
@@ -560,26 +536,36 @@
         Axios.get(`${that.api.host}${that.api.pageData}`).then(
           (res) => {
 //            console.log(res.data)
-            res.data.forEach(function (tab, i) {
-              tab.son.forEach(function (table, i) {
+            if(res.data.status === 200){
+              res.data.data.forEach(function (tab, i) {
+                tab.son.forEach(function (table, i) {
+                  if (table.id === '9') {
+                    // 红黑码id：9    为数据添加checked 属性为空数组，方便记录checkBox的选择值;
+                    table.son.forEach(function (item) {
+                      item.val = '';
+                      item.checked = [];
+                      item.pan = that.selectedPan;
+                    })
+                  } else {
+                    table.son.forEach(function (item) {
+                      item.val = '';
+                      item.pan = that.selectedPan;
+                    })
+                  }
+                })
+              });
 
-                if (table.id === '9') {
-                  // 红黑码id：9    为数据添加checked 属性为空数组，方便记录checkBox的选择值;
-                  table.son.forEach(function (item) {
-                    item.val = '';
-                    item.checked = [];
-                    item.pan = that.selectedPan;
-                  })
-                } else {
-                  table.son.forEach(function (item) {
-                    item.val = '';
-                    item.pan = that.selectedPan;
-                  })
-                }
-              })
-            });
-            that.pageData = res.data;
-            that.activeTab = that.pageData[0].id;
+              that.pageData = res.data.data;
+              that.activeTab = that.pageData[0].id;
+            }else{
+
+
+              if(res.data.status === 300){
+                window.location.href = res.data.data;
+              }else{
+                alert( res.data.message )
+              }
+            }
           }
         )
       },
@@ -611,10 +597,13 @@
             alert(res.data.message);
             that.dialogVisible = false;
             that.reloadWindow();
-
           } else {
-            alert(res.data.message);
-            that.reloadWindow();
+            if(res.data.status === 300){
+              window.location.href = res.data.data;
+            }else{
+              alert( res.data.message)
+              that.reloadWindow();
+            }
           }
         }).catch(function (err) {
           console.log('err: to buyAPI ', err)
@@ -623,22 +612,32 @@
 
         that.dialogVisible = false;
       },
+
+
       getIndexData() {
         const that = this;
         const url = `${that.api.host}${that.api.index}`
         Axios.get(url).then(function (res) {
 //            console.log( 'success - getIndexData:' , res.data )
-          that.indexData = res.data;
-          that.setTimer()  // 设置倒计时器
+          if(res.data.status === 200){
+            that.indexData = res.data.data;
+            that.setTimer()  // 设置倒计时器
+          }else{
+            if(res.data.status === 300){
+              window.location.href = res.data.data;
+            }else{
+              alert( res.data.message)
+            }
+
+          }
+
         }).catch(function (err) {
           console.log('err - getIndexData:', err)
         })
       },
-
 //      向后台请求获取用户信息 post
       getUserInfo() {
         const that = this;
-
         const url = `${that.api.host}${that.api.user}`;
         const config = {
           headers: {
@@ -651,14 +650,12 @@
 //            console.log('用户信息获取成功：', res.data.message);
             that.userInfo = res.data.data
           } else {
-            alert(res.data.message);
+            // alert(res.data.message);
             window.location.href = res.data.data;
           }
         }).catch(function (err) {
-          console.log('err: to buyAPI ', err)
+          console.log('err: to getUserInfo', err)
         })
-
-
       },
 
       // 获取用户自己的购买开奖结果
@@ -676,7 +673,11 @@
 //            console.log('开奖结果接口数据获取成功：', res.data);
             that.winData = res.data.data
           } else {
-            alert( ` 【开奖结果获取失败】:${res.data.message}`)
+            if(res.data.status === 300){
+              window.location.href = res.data.data;
+            }else{
+              alert( res.data.message)
+            }
           }
         }).catch(function (err) {
           console.log('开奖结果接口数据获取失败：', err)
@@ -838,7 +839,14 @@
       .el-main {
         /*padding-right: 30px;*/
         padding-top: 5px;
-        padding-right: 20%;
+        min-width: 960px !important;
+        @media screen and (max-width: 1400px) {
+          padding-right: 0;
+        }
+
+        @media screen and (min-width: 1401px) {
+          padding-right: 15%;
+        }
 
         /*订单弹出层*/
         .dingdanMoney{
