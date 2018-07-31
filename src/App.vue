@@ -209,6 +209,12 @@
                     </div>
                   </div>
 
+
+                  <!-- 表格： 欲出几率  181 -->
+                  <template v-if="table.id === '181'">
+                      <yuchujilv  :items="table.son"></yuchujilv>
+                  </template>
+
                 </template>
 
               </el-tab-pane>
@@ -263,10 +269,11 @@
 
 <script>
   import Axios from 'axios';
-  import ElButton from "../node_modules/element-ui/packages/button/src/button.vue";
+//  import ElButton from "../node_modules/element-ui/packages/button/src/button.vue";
+  import yuchujilv from './components/yuchujilv/yuchujilv.vue';
 
   export default {
-    components: {ElButton},
+    components: { 'yuchujilv': yuchujilv},
     name: 'App',
     data() {
       return {
@@ -305,9 +312,7 @@
       this.getIndexData();  // 获取其他信息
       this.getUserInfo();  // 获取用户信息
       this.getWinData();
-
       console.log( 'mounted')
-      const that = this;
 
     },
     computed: {
@@ -746,12 +751,6 @@
         that.buyData[index].val = '';
         that.buyData.splice(index, 1)
       } ,
-
-//      购买记录分页
-//      handleCurrentChange(val) {
-//        this.currentPage = val
-//      }
-
     },
   }
 </script>
