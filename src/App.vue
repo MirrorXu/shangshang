@@ -104,7 +104,10 @@
                   </div>
                 </div>
                 <div class="right">
-                  <div class="time">投注时间：<span>{{ _remainingTime || '----'}}</span></div>
+                  <div class="time" v-if="indexData && indexData.stop">{{indexData.info || '不能下注'}}<span>{{ _remainingTime || '----'}}</span></div>
+                  <div class="time" v-else>{{indexData.info  || '可以下注'}}<span>{{ _remainingTime || '----'}}</span></div>
+
+
                   <div class="current">当前期数:<span>{{ indexData.current_period || '----' }}</span>期</div>
                 </div>
               </div>
@@ -141,7 +144,7 @@
               </div>
             </div>
 
-
+            <!--投注信息选项-->
             <el-tabs type="border-card" v-model="activeTab" @tab-click="tabsClick">
               <el-tab-pane v-for="tab in pageData" :key="tab.id" :label="tab.name" :name="tab.id">
 
@@ -154,7 +157,7 @@
                       <div class="table-cell" v-for="(cell ,i) in  table.son" :class="{ bgYellow:cell.isSelected}">
                         <span>{{++i}}</span>
                         <span>{{cell.rate}}</span>
-                        <span><input  v-model="cell.val" type="number" @click.self="toggleSelected(cell)"
+                        <span><input v-if="indexData && !indexData.stop"  v-model="cell.val" type="number" @click.self="toggleSelected(cell)"
                                      @blur="checkInput(cell)"></span>
                         <!--@change.self="checkInput(cell)"-->
                       </div>
@@ -169,7 +172,7 @@
                       <div class="table-cell" v-for="(cell ,i) in  table.son" :class="{ bgYellow:cell.isSelected}">
                         <span>{{cell.name}}</span>
                         <span>{{cell.rate}}</span>
-                        <span><input type="number" v-model="cell.val" @click.self="toggleSelected(cell)"
+                        <span><input v-if="indexData && !indexData.stop" type="number" v-model="cell.val" @click.self="toggleSelected(cell)"
                                      @blur="checkInput(cell)"></span>
                       </div>
                     </div>
@@ -187,7 +190,7 @@
                           <i>{{v}}</i><input type="checkbox" v-model="row.checked" :value="v">
                         </div>
                         <span class="table-cell" style="color: red">赔率：{{row.rate}}</span>
-                        <span class="table-cell"> <span>金额：</span><input v-model="row.val" type="number"
+                        <span class="table-cell"> <span>金额：</span><input v-if="indexData && !indexData.stop" v-model="row.val" type="number"
                                                                          @click.self="toggleSelected(row)"
                                                                          @blur="checkInput(row)"> </span>
                       </div>
@@ -204,7 +207,7 @@
                       <div class="table-cell" v-for="(cell ,i) in  table.son" :class="{ bgYellow:cell.isSelected}">
                         <span>{{cell.name}}</span>
                         <span>{{cell.rate}}</span>
-                        <span><input type="number" v-model="cell.val" @click.self="toggleSelected(cell)" @blur="checkInput(cell)"></span>
+                        <span><input v-if="indexData && !indexData.stop" type="number" v-model="cell.val" @click.self="toggleSelected(cell)" @blur="checkInput(cell)"></span>
                       </div>
                     </div>
                   </div>
@@ -281,7 +284,7 @@
         setAll: undefined,
         dialogVisible: false,
         api: {
-          host:"http://jon.linxizhilian.cn", //http://jon.linxizhilian.cn
+          host:"", //http://jon.linxizhilian.cn
           pageData: "/pagedata",
           buy: "/buyrecord",
           index: "/indexdata",
@@ -313,6 +316,11 @@
       this.getUserInfo();  // 获取用户信息
       this.getWinData();
       console.log( 'mounted')
+
+      const that = this;
+      // setTimeout(function () {
+      //     that.indexData.stop = true
+      // },3000)
 
     },
     computed: {
@@ -544,6 +552,7 @@
             if(res.data.status === 200){
               res.data.data.forEach(function (tab, i) {
                 tab.son.forEach(function (table, i) {
+
                   if (table.id === '9') {
                     // 红黑码id：9    为数据添加checked 属性为空数组，方便记录checkBox的选择值;
                     table.son.forEach(function (item) {
@@ -555,6 +564,10 @@
                     table.son.forEach(function (item) {
                       item.val = '';
                       item.pan = that.selectedPan;
+
+                      // if(item.id == '186'){
+                      //   console.log(item)
+                      // }
                     })
                   }
                 })
@@ -563,8 +576,6 @@
               that.pageData = res.data.data;
               that.activeTab = that.pageData[0].id;
             }else{
-
-
               if(res.data.status === 300){
                 window.location.href = res.data.data;
               }else{
@@ -691,7 +702,6 @@
 
       isCheckBoxOk() {
         const that = this;
-
         let flag = true;
 
         that.pageData.forEach(function (tab) {
@@ -846,6 +856,16 @@
         @media screen and (min-width: 1401px) {
           padding-right: 15%;
         }
+
+
+        /*开奖结果中的分页功能视图*/
+        .pagination{
+            display: flex;
+            padding-top: 20px;
+            flex-direction: row;
+          justify-content: center;
+        }
+
 
         /*订单弹出层*/
         .dingdanMoney{
